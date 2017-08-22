@@ -1,0 +1,28 @@
+emoji表情问题
+
+贴吧昵称里面必须有表情，如何不使用任何端的展示与输入框输入表情，而直接用代码怎么设置emoji呢？
+
+解决这个问题，不得不看下编码，Emoji是一种特殊的字符。在Unicode编码中，不属于基本多文种平面（BMP）而属于第一辅助平面（SMP），具体码点值范围在
+
+1F300-1F5FF 杂项符号和象形文字   Miscellaneous Symbols And Pictographs
+1F600-1F64F 表情符号    Emotions
+（详见 https://en.wikipedia.org/wiki/Plane_(Unicode)
+
+这就意味着，其使用的Unicode字符超出了通常使用的三字节UTF-8编码的Unicode范围，必须用四个字节来表示。 
+UTF-16对于BMP的码点，采用2个字节进行编码，而BMP之外的码点，用4个字节组成代理对（surrogate pair）来表示。其中前两个字节范围是U+D800到U+DBFF，后两个字节范围是U+DC00到U+DFFF，通过以下公式完成映射（H：高字节 L：低字节 c：码点） 
+这里说的utf-8和utf-16，其实本质上是一样的。只是utf-8是一个直接的映射。而utf-16需要根据代理区的（前导代理，后尾代理）来映射。utf-16比utf-8多了一步而已！
+
+H = Math.floor((c-0x10000) / 0x400)+0xD800 
+L = (c – 0x10000) % 0x400 + 0xDC00
+（我这里说的比较简略，详见 
+https://www.bbsmax.com/A/VGzleVXYJb/ 
+http://www.alloyteam.com/2016/12/javascript-has-a-unicode-sinkhole/）
+
+这里’\ud83d\udc35’ 两个字符共同表示那个图片 
+如果我们把表示emoji的unicode编码字符在程序中解码过来，不就是emoji了吗。
+
+附： 
+emoji与utf等对应关系 
+（详见 https://punchdrunker.github.io/iOSEmoji/table_html/index.html） 
+最全emoji列表 
+（https://www.webpagefx.com/tools/emoji-cheat-sheet/）
