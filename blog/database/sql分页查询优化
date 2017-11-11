@@ -1,0 +1,22 @@
+表结构
+CREATE TABLE `table` (
+  `id` int(10) NOT NULL auto_increment,
+  `uid` int(10) NOT NULL,
+  `time` int(10) NOT NULL,
+  `uname` varchar(32) NOT NULL,
+  PRIMARY KEY  (`id`),
+  KEY `uid_time` (`uid`,`time`),
+  KEY `time` (`time`)
+) ENGINE=InnoDB AUTO_INCREMENT=10000001 DEFAULT CHARSET=utf-8
+
+一般分页sql是这样写的：
+select * from table where uid=1 order by time desc limit 0,10;
+如果你要select的字段(uname)并不全在索引中,这时候就要回访表去获取这些字段内容,这种回访操作产生了大量的随机IO,导致了资源的消耗,响应时间的增加，这样分页越向后翻页耗时越大，比如 limit 10000,10；
+这种回访操作绝大部分是不必要的,你只是要查看第100个页面的相应字段内容,但在普通分页查询中,前99个页面的内容其实也都回访了一遍,而后被抛弃掉,这导致了资源的浪费,响应时间的急剧增加.
+而且越往后翻页,不必要的回访表操作越多,所以响应时间也越来越长.
+
+优化方案
+select t2.* from (select id from table  where uid=1 order by time desc limit 100,10) as t1,table as t2 where t1.id=t2.id;
+在改进后的分页查询中,子查询select id from table  where uid=1 order by time desc limit 100,10; 先获取了第100个页面的id,这里并没有回访表的操作,
+因为(uid,time,id) 都在 KEY uid_time 中(索引的叶节点中记录着主键 id 字段),最后人为的通过id自关联回访表获取第100个页面的其它字段内容.这样达到了同样的效果,
+但避免了前99个页面的回访表操作,所以响应时间大幅提升.
