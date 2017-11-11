@@ -20,3 +20,4 @@ select t2.* from (select id from table  where uid=1 order by time desc limit 100
 在改进后的分页查询中,子查询select id from table  where uid=1 order by time desc limit 100,10; 先获取了第100个页面的id,这里并没有回访表的操作,
 因为(uid,time,id) 都在 KEY uid_time 中(索引的叶节点中记录着主键 id 字段),最后人为的通过id自关联回访表获取第100个页面的其它字段内容.这样达到了同样的效果,
 但避免了前99个页面的回访表操作,所以响应时间大幅提升.
+还有一种优化方法是把页面调度放到下一页的链接上，假设每一页有20个结果，查询就应该limit 21行数据，并只显示20行，如果结果中有21行，就会有下一页
